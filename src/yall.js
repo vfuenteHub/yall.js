@@ -3,7 +3,7 @@
  * Yet Another Lazy loader
  **/
 
-const yallLoad = function(element, env) {
+const yallLoad = function (element, env) {
   if (element.tagName === "IMG") {
     let parentElement = element.parentNode;
 
@@ -68,9 +68,12 @@ const yallLoad = function(element, env) {
   }
 };
 
-const yall = function(userOptions) {
+const yall = function (userOptions) {
+  const edgeBrowser = window.navigator.userAgent.match(/Edge\/(\d{2})\./);
+  const edgePartialSupport = (edgeBrowser) ? (parseInt(edgeBrowser[1], 10) === 15) : false;
+
   const env = {
-    intersectionObserverSupport: "IntersectionObserver" in window && "IntersectionObserverEntry" in window && "intersectionRatio" in window.IntersectionObserverEntry.prototype,
+    intersectionObserverSupport: "IntersectionObserver" in window && "IntersectionObserverEntry" in window && "intersectionRatio" in window.IntersectionObserverEntry.prototype && !edgePartialSupport,
     mutationObserverSupport: "MutationObserver" in window,
     idleCallbackSupport: "requestIdleCallback" in window,
     asyncDecodeSupport: "decode" in new Image(),
@@ -127,8 +130,8 @@ const yall = function(userOptions) {
         }
       });
     }, {
-      rootMargin: `${options.threshold}px 0%`
-    });
+        rootMargin: `${options.threshold}px 0%`
+      });
 
     lazyElements.forEach((lazyElement) => intersectionListener.observe(lazyElement));
   } else {
