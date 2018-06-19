@@ -3,7 +3,11 @@
  * Yet Another Lazy loader
  **/
 
-const yallLoad = function (element, env) {
+
+const yallLoad = function (element, env, opt) {
+
+  const isFunction = (fn) => !!(fn && fn.constructor && fn.call && fn.apply);
+
   if (element.tagName === "IMG") {
     let parentElement = element.parentNode;
 
@@ -57,6 +61,11 @@ const yallLoad = function (element, env) {
           source.removeAttribute(`data-${dataAttribute}`);
         }
       }
+
+      if (isFunction(opt.onDone)) {
+        opt.onDone(element);
+      }
+
     });
 
     element.load();
@@ -98,12 +107,16 @@ const yall = function (userOptions) {
     mutationObserverOptions: {
       childList: true
     },
+    onDone: null,
     ...userOptions
   };
   const selectorString = `img.${options.lazyClass},video.${options.lazyClass},iframe.${options.lazyClass}`;
   const idleCallbackOptions = {
     timeout: options.idleLoadTimeout
   };
+
+  // console.log(options.onDone);
+
 
   let lazyElements = [].slice.call(document.querySelectorAll(selectorString));
 
@@ -115,10 +128,10 @@ const yall = function (userOptions) {
         if (entry.isIntersecting === true) {
           if (options.idlyLoad === true && env.idleCallbackSupport === true) {
             requestIdleCallback(() => {
-              yallLoad(element, env);
+              yallLoad(element, env, options);
             }, idleCallbackOptions);
           } else {
-            yallLoad(element, env);
+            yallLoad(element, env, options);
           }
 
           element.classList.remove(options.lazyClass);
@@ -146,10 +159,10 @@ const yall = function (userOptions) {
             if (lazyElement.getBoundingClientRect().top <= (window.innerHeight + options.threshold) && lazyElement.getBoundingClientRect().bottom >= -(options.threshold) && getComputedStyle(lazyElement).display !== "none") {
               if (options.idlyLoad === true && env.idleCallbackSupport === true) {
                 requestIdleCallback(() => {
-                  yallLoad(lazyElement, env);
+                  yallLoad(lazyElement, env, options);
                 }, idleCallbackOptions);
               } else {
-                yallLoad(lazyElement, env);
+                yallLoad(lazyElement, env, options);
               }
 
               lazyElement.classList.remove(options.lazyClass);
