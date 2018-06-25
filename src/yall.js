@@ -18,33 +18,10 @@ const yallLoad = function (element, env) {
       });
     }
 
-    let newImageElement = new Image();
-
-    if (typeof element.dataset.srcset !== "undefined") {
-      newImageElement.srcset = element.dataset.srcset;
-    }
-
-    newImageElement.src = element.dataset.src;
-
-    if (env.asyncDecodeSupport === true) {
-      newImageElement.decode().then(() => {
-        for (let i = 0; i < element.attributes.length; i++) {
-          let attrName = element.attributes[i].name;
-          let attrValue = element.attributes[i].value;
-
-          if (env.ignoredImgAttributes.indexOf(attrName) === -1) {
-            newImageElement.setAttribute(attrName, attrValue);
-          }
-        }
-
-        element.replaceWith(newImageElement);
-      });
-    } else {
-      for (let dataAttribute in element.dataset) {
-        if (env.acceptedDataAttributes.indexOf(`data-${dataAttribute}`) !== -1) {
-          element.setAttribute(dataAttribute, element.dataset[dataAttribute]);
-          element.removeAttribute(`data-${dataAttribute}`);
-        }
+    for (let dataAttribute in element.dataset) {
+      if (env.acceptedDataAttributes.indexOf(`data-${dataAttribute}`) !== -1) {
+        element.setAttribute(dataAttribute, element.dataset[dataAttribute]);
+        element.removeAttribute(`data-${dataAttribute}`);
       }
     }
   }
