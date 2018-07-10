@@ -3,7 +3,9 @@
  * Yet Another Lazy loader
  **/
 
-const yallLoad = function(element, env) { 
+const isFunction = (fn) => !!(fn && fn.constructor && fn.call && fn.apply);
+
+const yallLoad = function(element, env, options) { 
   if (element.tagName === "IMG") {
     let parentElement = element.parentNode;
 
@@ -20,6 +22,10 @@ const yallLoad = function(element, env) {
 
     let newImageElement = new Image();
 
+    if (isFunction(options.callback)) {
+      newImageElement.onload = options.callback;
+  	};
+    
     if (typeof element.dataset.srcset !== "undefined") {
       newImageElement.srcset = element.dataset.srcset;
     }
@@ -50,6 +56,10 @@ const yallLoad = function(element, env) {
   }
 
   if (element.tagName === "VIDEO") {
+    if (isFunction(options.callback)) {
+      element.onload = options.callback;
+  	};
+    
     [].slice.call(element.querySelectorAll("source")).forEach((source) => {
       for (let dataAttribute in source.dataset) {
         if (env.acceptedDataAttributes.indexOf(`data-${dataAttribute}`) !== -1) {
@@ -63,13 +73,16 @@ const yallLoad = function(element, env) {
   }
 
   if (element.tagName === "IFRAME") {
+    if (isFunction(options.callback)) {
+      element.onload = options.callback;
+  	};
+    
     element.src = element.dataset.src;
     element.removeAttribute("data-src");
   }
 };
 
 const yall = function(userOptions) {  
-  const isFunction = (fn) => !!(fn && fn.constructor && fn.call && fn.apply);
   const env = {
     intersectionObserverSupport: "IntersectionObserver" in window && "IntersectionObserverEntry" in window && "intersectionRatio" in window.IntersectionObserverEntry.prototype,
     mutationObserverSupport: "MutationObserver" in window,
@@ -114,18 +127,14 @@ const yall = function(userOptions) {
         if (entry.isIntersecting === true) {
           if (options.idlyLoad === true && env.idleCallbackSupport === true) {
             requestIdleCallback(() => {
-              yallLoad(element, env);
+              yallLoad(element, env, options);
             }, idleCallbackOptions);
           } else {
-            yallLoad(element, env);
+            yallLoad(element, env, options);
           }
 
           element.classList.remove(options.lazyClass);
           observer.unobserve(element);
-
-          if (isFunction(options.callback)) {
-            options.callback(element);
-          };
           
           lazyElements = lazyElements.filter((lazyElement) => {
             return lazyElement !== element;
@@ -149,17 +158,13 @@ const yall = function(userOptions) {
             if (lazyElement.getBoundingClientRect().top <= (window.innerHeight + options.threshold) && lazyElement.getBoundingClientRect().bottom >= -(options.threshold) && getComputedStyle(lazyElement).display !== "none") {
               if (options.idlyLoad === true && env.idleCallbackSupport === true) {
                 requestIdleCallback(() => {
-                  yallLoad(lazyElement, env);
+                  yallLoad(lazyElement, env, options);
                 }, idleCallbackOptions);
               } else {
-                yallLoad(lazyElement, env);
+                yallLoad(lazyElement, env, options);
               }
 
               lazyElement.classList.remove(options.lazyClass);
-
-              if (isFunction(options.callback)) {
-                options.callback(lazyElement);
-              };
               
               lazyElements = lazyElements.filter((element) => {
                 return element !== lazyElement;
