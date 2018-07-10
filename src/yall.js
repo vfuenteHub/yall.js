@@ -3,11 +3,7 @@
  * Yet Another Lazy loader
  **/
 
-
-const yallLoad = function (element, env, opt) {
-
-  const isFunction = (fn) => !!(fn && fn.constructor && fn.call && fn.apply);
-
+const yallLoad = function(element, env) { 
   if (element.tagName === "IMG") {
     let parentElement = element.parentNode;
 
@@ -61,11 +57,6 @@ const yallLoad = function (element, env, opt) {
           source.removeAttribute(`data-${dataAttribute}`);
         }
       }
-
-      if (isFunction(opt.onDone)) {
-        opt.onDone(element);
-      }
-
     });
 
     element.load();
@@ -77,12 +68,10 @@ const yallLoad = function (element, env, opt) {
   }
 };
 
-const yall = function (userOptions) {
-  const edgeBrowser = window.navigator.userAgent.match(/Edge\/(\d{2})\./);
-  const edgePartialSupport = (edgeBrowser) ? (parseInt(edgeBrowser[1], 10) === 15) : false;
-
+const yall = function(userOptions) {  
+  const isFunction = (fn) => !!(fn && fn.constructor && fn.call && fn.apply);
   const env = {
-    intersectionObserverSupport: "IntersectionObserver" in window && "IntersectionObserverEntry" in window && "intersectionRatio" in window.IntersectionObserverEntry.prototype && !edgePartialSupport,
+    intersectionObserverSupport: "IntersectionObserver" in window && "IntersectionObserverEntry" in window && "intersectionRatio" in window.IntersectionObserverEntry.prototype,
     mutationObserverSupport: "MutationObserver" in window,
     idleCallbackSupport: "requestIdleCallback" in window,
     asyncDecodeSupport: "decode" in new Image(),
@@ -107,16 +96,13 @@ const yall = function (userOptions) {
     mutationObserverOptions: {
       childList: true
     },
-    onDone: null,
+    callback: null,
     ...userOptions
   };
   const selectorString = `img.${options.lazyClass},video.${options.lazyClass},iframe.${options.lazyClass}`;
   const idleCallbackOptions = {
     timeout: options.idleLoadTimeout
   };
-
-  // console.log(options.onDone);
-
 
   let lazyElements = [].slice.call(document.querySelectorAll(selectorString));
 
@@ -128,23 +114,27 @@ const yall = function (userOptions) {
         if (entry.isIntersecting === true) {
           if (options.idlyLoad === true && env.idleCallbackSupport === true) {
             requestIdleCallback(() => {
-              yallLoad(element, env, options);
+              yallLoad(element, env);
             }, idleCallbackOptions);
           } else {
-            yallLoad(element, env, options);
+            yallLoad(element, env);
           }
 
           element.classList.remove(options.lazyClass);
           observer.unobserve(element);
 
+          if (isFunction(options.callback)) {
+            options.callback(element);
+          };
+          
           lazyElements = lazyElements.filter((lazyElement) => {
             return lazyElement !== element;
-          });
+          });        
         }
       });
     }, {
-        rootMargin: `${options.threshold}px 0%`
-      });
+      rootMargin: `${options.threshold}px 0%`
+    });
 
     lazyElements.forEach((lazyElement) => intersectionListener.observe(lazyElement));
   } else {
@@ -159,14 +149,18 @@ const yall = function (userOptions) {
             if (lazyElement.getBoundingClientRect().top <= (window.innerHeight + options.threshold) && lazyElement.getBoundingClientRect().bottom >= -(options.threshold) && getComputedStyle(lazyElement).display !== "none") {
               if (options.idlyLoad === true && env.idleCallbackSupport === true) {
                 requestIdleCallback(() => {
-                  yallLoad(lazyElement, env, options);
+                  yallLoad(lazyElement, env);
                 }, idleCallbackOptions);
               } else {
-                yallLoad(lazyElement, env, options);
+                yallLoad(lazyElement, env);
               }
 
               lazyElement.classList.remove(options.lazyClass);
 
+              if (isFunction(options.callback)) {
+                options.callback(lazyElement);
+              };
+              
               lazyElements = lazyElements.filter((element) => {
                 return element !== lazyElement;
               });
@@ -177,7 +171,7 @@ const yall = function (userOptions) {
 
           if (lazyElements.length === 0 && options.observeChanges === false) {
             env.eventsToBind.forEach((eventPair) => eventPair[0].removeEventListener(eventPair[1], yallBack));
-          }
+          }          
         }, options.throttleTime);
       }
     };
@@ -205,5 +199,5 @@ const yall = function (userOptions) {
     });
 
     mutationListener.observe(document.querySelector(options.observeRootSelector), options.mutationObserverOptions);
-  }
+  };
 };
