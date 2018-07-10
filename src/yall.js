@@ -23,7 +23,7 @@ const yallLoad = function(element, env, options) {
     let newImageElement = new Image();
 
     if (isFunction(options.callback)) {
-      newImageElement.onload = options.callback;
+      newImageElement.onload = options.callback.call(newImageElement, element);
   	};
     
     if (typeof element.dataset.srcset !== "undefined") {
@@ -57,7 +57,7 @@ const yallLoad = function(element, env, options) {
 
   if (element.tagName === "VIDEO") {
     if (isFunction(options.callback)) {
-      element.onload = options.callback;
+      element.onload = options.callback.call(null, element);
   	};
     
     [].slice.call(element.querySelectorAll("source")).forEach((source) => {
@@ -74,7 +74,7 @@ const yallLoad = function(element, env, options) {
 
   if (element.tagName === "IFRAME") {
     if (isFunction(options.callback)) {
-      element.onload = options.callback;
+      element.onload = options.callback.call(null, element);
   	};
     
     element.src = element.dataset.src;
